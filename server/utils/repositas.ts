@@ -2,7 +2,7 @@ import { resolve } from 'node:path'
 import type { H3Event } from 'h3'
 import { nexitasEnv, nexitasDatabase } from '#nexitas/server/utils/nexitas'
 import { FILE_ID } from '../../shared/contracts'
-import { getFile } from '../core/files'
+import { getFile, getFolder } from '../core/files'
 
 /** Where the bytes are: beside the database, in the data directory. */
 export const filesDir = () => resolve(nexitasEnv('DATA_DIR')!, 'repositas')
@@ -23,4 +23,12 @@ export function routeFile(event: H3Event, projectId: string) {
   const file = FILE_ID.test(id) ? getFile(nexitasDatabase(), projectId, id) : null
   if (!file) throw createError({ statusCode: 404, statusMessage: 'There is no such file.' })
   return file
+}
+
+/** The route's folder of `projectId`, or a 404. */
+export function routeFolder(event: H3Event, projectId: string) {
+  const id = getRouterParam(event, 'folder') ?? ''
+  const folder = FILE_ID.test(id) ? getFolder(nexitasDatabase(), projectId, id) : null
+  if (!folder) throw createError({ statusCode: 404, statusMessage: 'There is no such folder.' })
+  return folder
 }

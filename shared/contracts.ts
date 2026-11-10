@@ -13,15 +13,32 @@ export const FILE_TYPES: Record<string, string> = {
 }
 export const IMAGE_TYPES = Object.keys(FILE_TYPES).filter((type) => type.startsWith('image/'))
 
-/** Ids are random, since anyone who has one can read the file. */
+/** Ids are random, since anyone who has one can read the file. Folders' ids are made alike. */
 export const FILE_ID = /^[A-Za-z0-9_-]{32}$/
 
 /** An upload's name, sent beside its bytes: `?name=hero.png`. */
 export const fileNameSchema = z.string().trim().min(1, 'Give the file a name.').max(200)
 
-/** A file on the admin's list. */
+/** A folder's name, unique within its project. */
+export const folderNameSchema = z.string().trim().min(1, 'Give the folder a name.').max(60)
+
+/** A file's new name, or the folder it goes in (null: none). */
+export const fileChangeSchema = z.object({
+  name: fileNameSchema.optional(),
+  folderId: z.string().regex(FILE_ID, 'There is no such folder.').nullable().optional(),
+})
+
+/** A file on the admin's list, in one folder or none. The folder is the admin's order only: it
+ *  never becomes part of the file's address. */
 export interface ProjectFile extends StoredFile {
+  folderId: string | null
   createdAt: number
+}
+
+/** A way to sort a project's files. Deleting one deletes the files in it. */
+export interface Folder {
+  id: string
+  name: string
 }
 
 /** 2048 → "2 kB", 3_500_000 → "3.3 MB" */

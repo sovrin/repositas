@@ -15,12 +15,17 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { openDatabase } from '#nexitas/server/core/database'
 import { createProject, deleteProject } from '#nexitas/server/core/projects'
 import {
+  createFolder,
   deleteFile,
+  deleteFolder,
   deleteProjectFiles,
   getFile,
   listFiles,
+  listFolders,
   removeStaleParts,
+  renameFolder,
   saveFile,
+  updateFile,
 } from '../../server/core/files'
 import { repositas } from '../../server/core/module'
 import { sniff } from '../../server/core/sniff'
@@ -120,15 +125,50 @@ describe('files', () => {
     expect(existsSync(join(files, saved.id))).toBe(false)
   })
 
+  it('sorts files into folders, and deletes a folder with its files', async () => {
+    const { db, files } = setup()
+    const blog = createFolder(db, 'sonotas', 'Blog')!
+    const team = createFolder(db, 'sonotas', 'Team')!
+    expect(createFolder(db, 'sonotas', 'Blog')).toBeNull()
+    expect(renameFolder(db, 'sonotas', team.id, 'Blog')).toBe(false)
+    expect(renameFolder(db, 'sonotas', team.id, 'About')).toBe(true)
+    expect(listFolders(db, 'sonotas').map((folder) => folder.name)).toEqual(['About', 'Blog'])
+    const other = createFolder(db, 'other', 'Theirs')!
+
+    const kept = (await saveFile(db, files, 'sonotas', 'a.png', Readable.from([png])))!
+    const gone = (await saveFile(db, files, 'sonotas', 'b.png', Readable.from([png]), blog.id))!
+    expect(gone.folderId).toBe(blog.id)
+    // Renamed and moved, at the same address; never into another project's folder.
+    expect(updateFile(db, 'sonotas', kept.id, { name: 'hero.png', folderId: team.id })).toBe(true)
+    expect(getFile(db, 'sonotas', kept.id)).toMatchObject({
+      name: 'hero.png',
+      folderId: team.id,
+      path: kept.path,
+    })
+    expect(updateFile(db, 'sonotas', kept.id, { folderId: other.id })).toBe(false)
+    expect(updateFile(db, 'other', kept.id, { name: 'x.png' })).toBe(false)
+    expect(updateFile(db, 'sonotas', kept.id, { folderId: null })).toBe(true)
+    expect(getFile(db, 'sonotas', kept.id)).toMatchObject({ name: 'hero.png', folderId: null })
+
+    deleteFolder(db, files, 'other', blog.id) // not theirs: nothing happens
+    expect(getFile(db, 'sonotas', gone.id)).not.toBeNull()
+    deleteFolder(db, files, 'sonotas', blog.id)
+    expect(listFiles(db, 'sonotas').map((file) => file.id)).toEqual([kept.id])
+    expect(existsSync(join(files, gone.id))).toBe(false)
+    expect(listFolders(db, 'sonotas').map((folder) => folder.name)).toEqual(['About'])
+  })
+
   it('goes with its project, which its rows would otherwise hold on to', async () => {
     const { db, files } = setup()
-    const saved = (await saveFile(db, files, 'sonotas', 'a.jpg', Readable.from([jpeg])))!
+    const folder = createFolder(db, 'sonotas', 'Blog')!
+    const saved = (await saveFile(db, files, 'sonotas', 'a.jpg', Readable.from([jpeg]), folder.id))!
     expect(() => deleteProject(db, 'sonotas', [])).toThrow()
     // What the module's deleteProject runs, with a test folder for the data directory.
     deleteProject(db, 'sonotas', [
       { id: 'repositas', deleteProject: (db, id) => deleteProjectFiles(db, files, id) },
     ])
     expect(listFiles(db, 'sonotas')).toEqual([])
+    expect(listFolders(db, 'sonotas')).toEqual([])
     expect(existsSync(join(files, saved.id))).toBe(false)
   })
 

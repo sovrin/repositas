@@ -14,6 +14,8 @@ Conventions for working on repositas, in code and in the interface.
   knows who they are, and changes to it are additive.
 - A file's bytes are on disk under its random id, in the data directory's `repositas/`; a row in
   `files` says what they are. No project id or file name becomes part of a path.
+- Folders (`folders`) are the admin's order only: one level, a file in one or none. They never
+  reach the file's address or the capability.
 - What is stored is checked by its bytes (`server/core/sniff.ts`), never by its name or the type
   the browser sends. Only types a browser shows without running anything: no SVG, no HTML.
 - `/v1/files/<project>/<id>` is public through `publicRoutes`: anyone with the address reads the

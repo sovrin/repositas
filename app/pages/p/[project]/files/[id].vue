@@ -2,14 +2,17 @@
 import { formatTime } from '#nexitas/app/lib/format'
 import { FILE_TYPES, formatSize } from '../../../../../shared/contracts'
 import FileList from '../../../../components/FileList.vue'
-import { useProjectFiles } from '../../../../lib/files'
+import { useProjectFiles, useProjectFolders } from '../../../../lib/files'
 
-// One file, opened beside the list: how it looks, its address, and deleting it at the inspector's
-// foot.
+// One file, opened beside the list: how it looks, its address, its name and folder, and deleting
+// it at the inspector's foot.
 const route = useRoute()
 const project = useProject().id.value
 const id = route.params.id as string
-const { data: files } = await useProjectFiles()
+const [{ data: files, refresh }, { data: folders }] = await Promise.all([
+  useProjectFiles(),
+  useProjectFolders(),
+])
 const file = computed(() => files.value?.find((known) => known.id === id))
 const origin = useRequestURL().origin
 const facts = computed(() => {
@@ -50,6 +53,12 @@ async function remove() {
         <p>
           <a :href="file.path" target="_blank" rel="noopener" class="link text-s">Open the file</a>
         </p>
+        <FileForm
+          :key="JSON.stringify([file.name, file.folderId])"
+          :file="file"
+          :folders="folders ?? []"
+          @saved="refresh"
+        />
       </template>
     </template>
     <template v-if="file" #danger>
