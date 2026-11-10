@@ -1,7 +1,7 @@
 import { nexitasDatabase } from '#nexitas/server/utils/nexitas'
 import { getProject } from '#nexitas/server/core/projects'
-import { readStream } from '../../../../core/files'
-import { filesDir, routeFile } from '../../../../utils/repositas'
+import { readStream } from '#self/server/core/files'
+import { filesDir, routeFile } from '#self/server/utils/repositas'
 
 /** A file's bytes, for anyone with its address. They never change under an id, so caches keep
  *  them for good. */

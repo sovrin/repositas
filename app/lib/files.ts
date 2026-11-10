@@ -1,5 +1,5 @@
-import type { Folder, ProjectFile } from '../../shared/contracts'
-import { FILE_TYPES, IMAGE_TYPES, THUMB_EDGE, THUMB_MAX } from '../../shared/contracts'
+import type { Folder, ProjectFile } from '#self/shared/contracts'
+import { FILE_TYPES, IMAGE_TYPES, THUMB_EDGE, THUMB_MAX } from '#self/shared/contracts'
 
 /** What the file inputs offer: every type repositas takes, or its images only. */
 export const acceptTypes = (images = false) =>

@@ -2,9 +2,9 @@ import { announceChange } from '#nexitas/server/utils/changes'
 import { invalid } from '#nexitas/server/utils/invalid'
 import { nexitasDatabase } from '#nexitas/server/utils/nexitas'
 import { requestProject } from '#nexitas/server/utils/projects'
-import { FILE_TYPES, fileNameSchema } from '../../../../../shared/contracts'
-import { getFolder, saveFile } from '../../../../core/files'
-import { filesDir } from '../../../../utils/repositas'
+import { FILE_TYPES, fileNameSchema } from '#self/shared/contracts'
+import { getFolder, saveFile } from '#self/server/core/files'
+import { filesDir } from '#self/server/utils/repositas'
 
 /** Uploads one file: its bytes as the body (application/octet-stream), its name as `?name=`, the
  *  folder it goes in, if any, as `?folder=`. The core has checked the announced length against the

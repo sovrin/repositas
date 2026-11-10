@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import FileList from '../../../../components/FileList.vue'
+import FileList from '#self/app/components/FileList.vue'
 </script>
 
 <template>

@@ -19,8 +19,8 @@ import type { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import type { DatabaseSync } from 'node:sqlite'
 import { newToken } from '#nexitas/server/core/auth'
-import { THUMB_EDGE, THUMB_TYPES } from '../../shared/contracts'
-import type { Folder, ProjectFile } from '../../shared/contracts'
+import { THUMB_EDGE, THUMB_TYPES } from '#self/shared/contracts'
+import type { Folder, ProjectFile } from '#self/shared/contracts'
 import { sniff } from './sniff'
 
 interface FileRow {

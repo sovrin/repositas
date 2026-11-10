@@ -1,7 +1,7 @@
 import { nexitasDatabase } from '#nexitas/server/utils/nexitas'
 import { requestProject } from '#nexitas/server/utils/projects'
-import { readThumb } from '../../../../../core/files'
-import { filesDir, routeFile } from '../../../../../utils/repositas'
+import { readThumb } from '#self/server/core/files'
+import { filesDir, routeFile } from '#self/server/utils/repositas'
 
 /** The file's preview, for the owner's list. It never changes, so the browser keeps it. */
 export default defineEventHandler((event) => {

@@ -1,5 +1,5 @@
 import { nexitasDatabase } from '#nexitas/server/utils/nexitas'
 import { requestProject } from '#nexitas/server/utils/projects'
-import { listFiles } from '../../../../core/files'
+import { listFiles } from '#self/server/core/files'
 
 export default defineEventHandler((event) => listFiles(nexitasDatabase(), requestProject(event).id))

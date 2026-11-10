@@ -1,8 +1,8 @@
 import { announceChange } from '#nexitas/server/utils/changes'
 import { nexitasDatabase } from '#nexitas/server/utils/nexitas'
 import { requestProject } from '#nexitas/server/utils/projects'
-import { deleteFile } from '../../../../../core/files'
-import { filesDir, routeFile } from '../../../../../utils/repositas'
+import { deleteFile } from '#self/server/core/files'
+import { filesDir, routeFile } from '#self/server/utils/repositas'
 
 /** Deletes the file; its address answers 404 from then on, wherever it is used. */
 export default defineEventHandler((event) => {

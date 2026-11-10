@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { formatTime } from '#nexitas/app/lib/format'
-import { FILE_TYPES, formatSize } from '../../../../../shared/contracts'
-import FileList from '../../../../components/FileList.vue'
-import { useProjectFiles, useProjectFolders } from '../../../../lib/files'
+import { FILE_TYPES, formatSize } from '#self/shared/contracts'
+import FileList from '#self/app/components/FileList.vue'
+import { useProjectFiles, useProjectFolders } from '#self/app/lib/files'
 
 // One file, opened beside the list: how it looks, its address, its name and folder, and deleting
 // it at the inspector's foot.
