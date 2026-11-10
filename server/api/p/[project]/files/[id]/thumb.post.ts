@@ -2,9 +2,9 @@ import { announceChange } from '#nexitas/server/utils/changes'
 import { invalid } from '#nexitas/server/utils/invalid'
 import { nexitasDatabase } from '#nexitas/server/utils/nexitas'
 import { requestProject } from '#nexitas/server/utils/projects'
-import { THUMB_MAX } from '../../../../../../shared/contracts'
-import { saveThumb } from '../../../../../core/files'
-import { filesDir, routeFile } from '../../../../../utils/repositas'
+import { THUMB_MAX } from '#self/shared/contracts'
+import { saveThumb } from '#self/server/core/files'
+import { filesDir, routeFile } from '#self/server/utils/repositas'
 
 /** Stores the file's preview: a small image the owner's browser made of it, as the body
  *  (application/octet-stream). Read whole, so its announced length is checked first. */

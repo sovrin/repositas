@@ -3,8 +3,8 @@
 import { readOnlyCors } from '#nexitas/server/utils/cors'
 import { formatCount, plural } from '#nexitas/app/lib/format'
 import type { NexitasModule } from '#nexitas/shared/modules'
-import { formatSize } from '../../shared/contracts'
-import { filesDir } from '../utils/repositas'
+import { formatSize } from '#self/shared/contracts'
+import { filesDir } from '#self/server/utils/repositas'
 import { countFiles, deleteProjectFiles, getFile, listNewFiles, removeStaleParts } from './files'
 
 export const repositas: NexitasModule = {

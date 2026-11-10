@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Folder, ProjectFile } from '../../shared/contracts'
+import type { Folder, ProjectFile } from '#self/shared/contracts'
 
 /** <FileForm :file="file" :folders="folders" @saved="…" />
  *  A file's name and folder. Its address stays whatever they become. */

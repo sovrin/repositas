@@ -3,9 +3,9 @@ import { announceChange } from '#nexitas/server/utils/changes'
 import { invalid } from '#nexitas/server/utils/invalid'
 import { nexitasDatabase } from '#nexitas/server/utils/nexitas'
 import { requestProject } from '#nexitas/server/utils/projects'
-import { folderNameSchema } from '../../../../../../../shared/contracts'
-import { renameFolder } from '../../../../../../core/files'
-import { routeFolder } from '../../../../../../utils/repositas'
+import { folderNameSchema } from '#self/shared/contracts'
+import { renameFolder } from '#self/server/core/files'
+import { routeFolder } from '#self/server/utils/repositas'
 
 /** Renames the folder: `{ name }`. */
 export default defineEventHandler(async (event) => {
