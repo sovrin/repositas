@@ -3,8 +3,8 @@ import { announceChange } from '#nexitas/server/utils/changes'
 import { invalid } from '#nexitas/server/utils/invalid'
 import { nexitasDatabase } from '#nexitas/server/utils/nexitas'
 import { requestProject } from '#nexitas/server/utils/projects'
-import { folderNameSchema } from '../../../../../../shared/contracts'
-import { createFolder } from '../../../../../core/files'
+import { folderNameSchema } from '#self/shared/contracts'
+import { createFolder } from '#self/server/core/files'
 
 /** Creates a folder: `{ name }`. */
 export default defineEventHandler(async (event) => {

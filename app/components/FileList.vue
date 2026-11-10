@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { formatAge, plural } from '#nexitas/app/lib/format'
-import type { Folder, ProjectFile } from '../../shared/contracts'
-import { FILE_TYPES, formatSize } from '../../shared/contracts'
+import type { Folder, ProjectFile } from '#self/shared/contracts'
+import { FILE_TYPES, formatSize } from '#self/shared/contracts'
 import {
   acceptTypes,
   addThumb,
@@ -10,7 +10,7 @@ import {
   uploadFile,
   useProjectFiles,
   useProjectFolders,
-} from '../lib/files'
+} from '#self/app/lib/files'
 
 /** <FileList :selected="id" :aside-name="name"><template #aside>…</template></FileList>
  *  The project's files as folders: the folders and the files in none, or one folder's files

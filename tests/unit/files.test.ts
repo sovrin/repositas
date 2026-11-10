@@ -28,9 +28,9 @@ import {
   saveFile,
   saveThumb,
   updateFile,
-} from '../../server/core/files'
-import { repositas } from '../../server/core/module'
-import { sniff } from '../../server/core/sniff'
+} from '#self/server/core/files'
+import { repositas } from '#self/server/core/module'
+import { sniff } from '#self/server/core/sniff'
 
 const dirs: string[] = []
 const dbs: DatabaseSync[] = []

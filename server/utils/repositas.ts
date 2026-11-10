@@ -1,8 +1,8 @@
 import { resolve } from 'node:path'
 import type { H3Event } from 'h3'
 import { nexitasEnv, nexitasDatabase } from '#nexitas/server/utils/nexitas'
-import { FILE_ID } from '../../shared/contracts'
-import { getFile, getFolder } from '../core/files'
+import { FILE_ID } from '#self/shared/contracts'
+import { getFile, getFolder } from '#self/server/core/files'
 
 /** Where the bytes are: beside the database, in the data directory. */
 export const filesDir = () => resolve(nexitasEnv('DATA_DIR')!, 'repositas')

@@ -2,9 +2,9 @@ import { announceChange } from '#nexitas/server/utils/changes'
 import { invalid } from '#nexitas/server/utils/invalid'
 import { nexitasDatabase } from '#nexitas/server/utils/nexitas'
 import { requestProject } from '#nexitas/server/utils/projects'
-import { fileChangeSchema } from '../../../../../../shared/contracts'
-import { updateFile } from '../../../../../core/files'
-import { routeFile } from '../../../../../utils/repositas'
+import { fileChangeSchema } from '#self/shared/contracts'
+import { updateFile } from '#self/server/core/files'
+import { routeFile } from '#self/server/utils/repositas'
 
 /** Renames the file or moves it to another folder: `{ name }`, `{ folderId }` (null: none). Its
  *  address stays. */

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { StoredFile } from '#nexitas/shared/capabilities'
-import { IMAGE_TYPES } from '../../shared/contracts'
-import { acceptTypes, uploadFile, useProjectFiles } from '../lib/files'
+import { IMAGE_TYPES } from '#self/shared/contracts'
+import { acceptTypes, uploadFile, useProjectFiles } from '#self/app/lib/files'
 
 /** The files capability's picker (see #nexitas/shared/capabilities), global so another module can
  *  render it by name without importing repositas: one of the open project's files, or a new one

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Folder } from '../../shared/contracts'
+import type { Folder } from '#self/shared/contracts'
 
 /** <FolderForm :folder="folder" @saved="…" />
  *  A new folder's name, or a folder's new one. Emits the folder as saved. */
