@@ -17,6 +17,13 @@ export const repositas: NexitasModule = {
       width INTEGER, height INTEGER, created_at INTEGER NOT NULL
     ) WITHOUT ROWID;
     CREATE INDEX files_newest ON files(project_id, created_at);`,
+    // Folders sort a project's files, one level, a file in one or none.
+    `CREATE TABLE folders (
+      id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
+      name TEXT NOT NULL, created_at INTEGER NOT NULL, UNIQUE (project_id, name)
+    ) WITHOUT ROWID;
+    ALTER TABLE files ADD COLUMN folder_id TEXT REFERENCES folders(id);
+    CREATE INDEX files_folder ON files(folder_id);`,
   ],
   // Read by sites anywhere, in an <img> or a link, so the address alone is the key.
   publicRoutes: [

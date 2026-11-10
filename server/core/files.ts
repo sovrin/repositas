@@ -1,6 +1,6 @@
-// A project's files: what is known about each in the files table, the bytes on disk as
-// <dir>/<id>. The id is random and the only name on disk, so no project id or file name ever
-// becomes part of a path.
+// A project's files and folders: what is known about each file in the files table, the bytes on
+// disk as <dir>/<id>. The id is random and the only name on disk, so no project id, folder or file
+// name ever becomes part of a path.
 import {
   closeSync,
   createReadStream,
@@ -18,7 +18,7 @@ import type { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import type { DatabaseSync } from 'node:sqlite'
 import { newToken } from '#nexitas/server/core/auth'
-import type { ProjectFile } from '../../shared/contracts'
+import type { Folder, ProjectFile } from '../../shared/contracts'
 import { sniff } from './sniff'
 
 interface FileRow {
@@ -28,10 +28,11 @@ interface FileRow {
   size: number
   width: number | null
   height: number | null
+  folder_id: string | null
   created_at: number
 }
 
-const COLUMNS = 'id, name, type, size, width, height, created_at'
+const COLUMNS = 'id, name, type, size, width, height, folder_id, created_at'
 
 /** Where anyone reads a file: on this app's origin, by its project and id. */
 export const filePath = (projectId: string, id: string) => `/v1/files/${projectId}/${id}`
@@ -44,6 +45,7 @@ const toFile = (projectId: string, row: FileRow): ProjectFile => ({
   width: row.width,
   height: row.height,
   path: filePath(projectId, row.id),
+  folderId: row.folder_id,
   createdAt: row.created_at,
 })
 
@@ -75,6 +77,7 @@ export async function saveFile(
   projectId: string,
   name: string,
   source: Readable,
+  folderId: string | null = null,
   now = Date.now(),
 ): Promise<ProjectFile | null> {
   const id = newToken('')
@@ -88,9 +91,9 @@ export async function saveFile(
     renameSync(path + PART, path)
     try {
       db.prepare(
-        `INSERT INTO files (id, project_id, name, type, size, width, height, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).run(id, projectId, name, kind.type, size, kind.width, kind.height, now)
+        `INSERT INTO files (id, project_id, name, type, size, width, height, folder_id, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(id, projectId, name, kind.type, size, kind.width, kind.height, folderId, now)
     } catch (error) {
       rmSync(path, { force: true })
       throw error
@@ -134,7 +137,27 @@ export function deleteFile(db: DatabaseSync, dir: string, projectId: string, id:
   return gone
 }
 
-/** Deletes every file of a project. */
+/** Renames the file or puts it in one of the project's folders (null: none); its address stays.
+ *  False when the project has no such file or folder. */
+export function updateFile(
+  db: DatabaseSync,
+  projectId: string,
+  id: string,
+  change: { name?: string; folderId?: string | null },
+) {
+  const file = getFile(db, projectId, id)
+  const { name = file?.name, folderId = file?.folderId ?? null } = change
+  if (!file || (folderId && !getFolder(db, projectId, folderId))) return false
+  db.prepare('UPDATE files SET name = ?, folder_id = ? WHERE project_id = ? AND id = ?').run(
+    name!,
+    folderId,
+    projectId,
+    id,
+  )
+  return true
+}
+
+/** Deletes every file of a project, and its folders. */
 // shortcut: runs in the core's transaction, but disk is not transactional: if the project's
 // deletion rolls back afterwards, its rows stay and their bytes are gone. Unlink after commit if
 // that ever bites.
@@ -143,7 +166,67 @@ export function deleteProjectFiles(db: DatabaseSync, dir: string, projectId: str
     id: string
   }[]
   db.prepare('DELETE FROM files WHERE project_id = ?').run(projectId)
+  db.prepare('DELETE FROM folders WHERE project_id = ?').run(projectId)
   for (const row of rows) rmSync(join(dir, row.id), { force: true })
+}
+
+/** By name. */
+export const listFolders = (db: DatabaseSync, projectId: string) =>
+  db
+    .prepare('SELECT id, name FROM folders WHERE project_id = ? ORDER BY name COLLATE NOCASE, id')
+    .all(projectId) as unknown as Folder[]
+
+export const getFolder = (db: DatabaseSync, projectId: string, id: string) =>
+  (db.prepare('SELECT id, name FROM folders WHERE project_id = ? AND id = ?').get(projectId, id) as
+    | Folder
+    | undefined) ?? null
+
+const nameTaken = (db: DatabaseSync, projectId: string, name: string, except = '') =>
+  !!db
+    .prepare('SELECT 1 FROM folders WHERE project_id = ? AND name = ? AND id != ?')
+    .get(projectId, name, except)
+
+/** The new folder, or null when the project has one by that name. */
+export function createFolder(db: DatabaseSync, projectId: string, name: string, now = Date.now()) {
+  if (nameTaken(db, projectId, name)) return null
+  const id = newToken('')
+  db.prepare('INSERT INTO folders (id, project_id, name, created_at) VALUES (?, ?, ?, ?)').run(
+    id,
+    projectId,
+    name,
+    now,
+  )
+  return { id, name }
+}
+
+/** False when another folder of the project has that name. */
+export function renameFolder(db: DatabaseSync, projectId: string, id: string, name: string) {
+  if (nameTaken(db, projectId, name, id)) return false
+  db.prepare('UPDATE folders SET name = ? WHERE project_id = ? AND id = ?').run(name, projectId, id)
+  return true
+}
+
+/** Deletes the folder with every file in it. */
+// shortcut: the rows go in one transaction, the bytes after it; a crash between leaves orphaned
+// bytes on disk, never a row without bytes. Sweep orphans if that ever matters.
+export function deleteFolder(db: DatabaseSync, dir: string, projectId: string, id: string) {
+  const ids = (
+    db
+      .prepare('SELECT id FROM files WHERE project_id = ? AND folder_id = ?')
+      .all(projectId, id) as {
+      id: string
+    }[]
+  ).map((row) => row.id)
+  db.exec('BEGIN')
+  try {
+    db.prepare('DELETE FROM files WHERE project_id = ? AND folder_id = ?').run(projectId, id)
+    db.prepare('DELETE FROM folders WHERE project_id = ? AND id = ?').run(projectId, id)
+    db.exec('COMMIT')
+  } catch (error) {
+    db.exec('ROLLBACK')
+    throw error
+  }
+  for (const file of ids) rmSync(join(dir, file), { force: true })
 }
 
 /** How many files a project has, and their bytes together. */

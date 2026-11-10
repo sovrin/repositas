@@ -4,7 +4,7 @@ Files for [nexitas](https://github.com/sovrin/nexitas): images and documents per
 in the admin and served at a public address your sites can use.
 
 ```
-owner ── /p/<project>/files                 upload, search, delete
+owner ── /p/<project>/files                 upload, sort into folders, rename, delete
 site  ── GET /v1/files/<project>/<id>       the file's bytes, cached for good
 ```
 
@@ -16,6 +16,8 @@ site  ── GET /v1/files/<project>/<id>       the file's bytes, cached for goo
   default) to match; Caddy has none.
 - **Addresses**: random and unguessable, but public: anyone who has one can read the file. A file
   never changes under its address; deleting it makes the address answer 404.
+- **Folders**: one level, a file in one folder or none. A file's name and folder can change; its
+  address stays. Deleting a folder deletes the files in it.
 - **Storage**: on disk in the data directory (`<DATA_DIR>/repositas/`), beside the database. Back
   up both together.
 
