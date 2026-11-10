@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2](https://github.com/sovrin/repositas/compare/v0.1.1...v0.1.2) (2026-11-10)
+
+
+### Features
+
+* **files:** browse by folder, drop to upload, and previews ([4fb051b](https://github.com/sovrin/repositas/commit/4fb051b0e95d957ad4be953b97f183620adfddde))
+* **files:** browse by folder, drop to upload, and previews ([50aaa32](https://github.com/sovrin/repositas/commit/50aaa326c0b020ff3c6800923f74db5f15b962d6))
+
 ## [0.1.1](https://github.com/sovrin/repositas/compare/v0.1.0...v0.1.1) (2026-11-10)
 
 
