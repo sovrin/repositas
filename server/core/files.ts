@@ -12,12 +12,14 @@ import {
   renameSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from 'node:fs'
 import { join } from 'node:path'
 import type { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import type { DatabaseSync } from 'node:sqlite'
 import { newToken } from '#nexitas/server/core/auth'
+import { THUMB_EDGE, THUMB_TYPES } from '../../shared/contracts'
 import type { Folder, ProjectFile } from '../../shared/contracts'
 import { sniff } from './sniff'
 
@@ -29,10 +31,11 @@ interface FileRow {
   width: number | null
   height: number | null
   folder_id: string | null
+  thumb_type: string | null
   created_at: number
 }
 
-const COLUMNS = 'id, name, type, size, width, height, folder_id, created_at'
+const COLUMNS = 'id, name, type, size, width, height, folder_id, thumb_type, created_at'
 
 /** Where anyone reads a file: on this app's origin, by its project and id. */
 export const filePath = (projectId: string, id: string) => `/v1/files/${projectId}/${id}`
@@ -46,6 +49,7 @@ const toFile = (projectId: string, row: FileRow): ProjectFile => ({
   height: row.height,
   path: filePath(projectId, row.id),
   folderId: row.folder_id,
+  thumb: !!row.thumb_type,
   createdAt: row.created_at,
 })
 
@@ -68,6 +72,14 @@ export function getFile(db: DatabaseSync, projectId: string, id: string): Projec
 const HEAD = 512 * 1024
 // An upload in progress, or one a crash cut off.
 const PART = '.part'
+// A file's preview, beside it.
+const THUMB = '.thumb'
+
+/** Removes a file's bytes and its preview's. */
+function removeBytes(dir: string, id: string) {
+  rmSync(join(dir, id), { force: true })
+  rmSync(join(dir, id + THUMB), { force: true })
+}
 
 /** Streams the file to disk, so its size never touches memory, then stores it; or answers null
  *  when it is not a type repositas takes (see sniff). An upload that breaks off leaves nothing. */
@@ -95,7 +107,7 @@ export async function saveFile(
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).run(id, projectId, name, kind.type, size, kind.width, kind.height, folderId, now)
     } catch (error) {
-      rmSync(path, { force: true })
+      removeBytes(dir, id)
       throw error
     }
     return getFile(db, projectId, id)
@@ -116,6 +128,40 @@ function readHead(path: string) {
 
 export const readStream = (dir: string, id: string) => createReadStream(join(dir, id))
 
+/** Stores the file's preview, sent by the owner's browser: false when it is not a small image of
+ *  a type it may be, or the file has no such file or a preview already. Its address never
+ *  changes, so a preview is never replaced. */
+export function saveThumb(
+  db: DatabaseSync,
+  dir: string,
+  projectId: string,
+  id: string,
+  bytes: Buffer,
+) {
+  const kind = sniff(bytes)
+  const file = getFile(db, projectId, id)
+  if (!kind || !THUMB_TYPES.includes(kind.type) || !file || file.thumb) return false
+  if (!kind.width || !kind.height || Math.max(kind.width, kind.height) > THUMB_EDGE) return false
+  const path = join(dir, id + THUMB)
+  writeFileSync(path + PART, bytes, { mode: 0o600 })
+  renameSync(path + PART, path)
+  db.prepare('UPDATE files SET thumb_type = ? WHERE project_id = ? AND id = ?').run(
+    kind.type,
+    projectId,
+    id,
+  )
+  return true
+}
+
+/** The preview's media type and a way to read its bytes, or null when the file has none. */
+export function readThumb(db: DatabaseSync, dir: string, projectId: string, id: string) {
+  const row = db
+    .prepare('SELECT thumb_type FROM files WHERE project_id = ? AND id = ?')
+    .get(projectId, id) as { thumb_type: string | null } | undefined
+  if (!row?.thumb_type) return null
+  return { type: row.thumb_type, open: () => createReadStream(join(dir, id + THUMB)) }
+}
+
 /** Removes uploads a crash cut off: parts older than `age` ms. */
 export function removeStaleParts(dir: string, age = 60 * 60 * 1000, now = Date.now()) {
   let names: string[]
@@ -133,7 +179,7 @@ export function removeStaleParts(dir: string, age = 60 * 60 * 1000, now = Date.n
 export function deleteFile(db: DatabaseSync, dir: string, projectId: string, id: string) {
   const gone =
     db.prepare('DELETE FROM files WHERE project_id = ? AND id = ?').run(projectId, id).changes === 1
-  if (gone) rmSync(join(dir, id), { force: true })
+  if (gone) removeBytes(dir, id)
   return gone
 }
 
@@ -167,7 +213,7 @@ export function deleteProjectFiles(db: DatabaseSync, dir: string, projectId: str
   }[]
   db.prepare('DELETE FROM files WHERE project_id = ?').run(projectId)
   db.prepare('DELETE FROM folders WHERE project_id = ?').run(projectId)
-  for (const row of rows) rmSync(join(dir, row.id), { force: true })
+  for (const row of rows) removeBytes(dir, row.id)
 }
 
 /** By name. */
@@ -226,7 +272,7 @@ export function deleteFolder(db: DatabaseSync, dir: string, projectId: string, i
     db.exec('ROLLBACK')
     throw error
   }
-  for (const file of ids) rmSync(join(dir, file), { force: true })
+  for (const file of ids) removeBytes(dir, file)
 }
 
 /** How many files a project has, and their bytes together. */

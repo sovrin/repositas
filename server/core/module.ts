@@ -24,6 +24,8 @@ export const repositas: NexitasModule = {
     ) WITHOUT ROWID;
     ALTER TABLE files ADD COLUMN folder_id TEXT REFERENCES folders(id);
     CREATE INDEX files_folder ON files(folder_id);`,
+    // A preview's media type, once the owner's browser has sent one; its bytes are <id>.thumb.
+    `ALTER TABLE files ADD COLUMN thumb_type TEXT;`,
   ],
   // Read by sites anywhere, in an <img> or a link, so the address alone is the key.
   publicRoutes: [
