@@ -13,6 +13,12 @@ export const FILE_TYPES: Record<string, string> = {
 }
 export const IMAGE_TYPES = Object.keys(FILE_TYPES).filter((type) => type.startsWith('image/'))
 
+/** A file's preview, made by the owner's browser: an image of at most THUMB_EDGE pixels on its
+ *  longest side, at most THUMB_MAX bytes. An image that small already is its own preview. */
+export const THUMB_EDGE = 320
+export const THUMB_MAX = 256 * 1024
+export const THUMB_TYPES = ['image/webp', 'image/jpeg', 'image/png']
+
 /** Ids are random, since anyone who has one can read the file. Folders' ids are made alike. */
 export const FILE_ID = /^[A-Za-z0-9_-]{32}$/
 
@@ -32,6 +38,8 @@ export const fileChangeSchema = z.object({
  *  never becomes part of the file's address. */
 export interface ProjectFile extends StoredFile {
   folderId: string | null
+  /** Whether it has a preview of its own (see THUMB_MAX). */
+  thumb: boolean
   createdAt: number
 }
 

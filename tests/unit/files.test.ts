@@ -22,9 +22,11 @@ import {
   getFile,
   listFiles,
   listFolders,
+  readThumb,
   removeStaleParts,
   renameFolder,
   saveFile,
+  saveThumb,
   updateFile,
 } from '../../server/core/files'
 import { repositas } from '../../server/core/module'
@@ -56,6 +58,8 @@ const bytes = (...parts: (string | number[])[]) =>
 const u16be = (n: number) => [n >> 8, n & 0xff]
 const u32be = (n: number) => [0, 0, ...u16be(n)]
 
+const pngOf = (width: number, height: number) =>
+  bytes('\x89PNG\r\n\x1A\n', u32be(13), 'IHDR', u32be(width), u32be(height), [8, 6, 0, 0, 0])
 const png = bytes('\x89PNG\r\n\x1A\n', u32be(13), 'IHDR', u32be(640), u32be(480), [8, 6, 0, 0, 0])
 // SOI, an APP0 segment to skip, then a baseline frame of 300 × 200.
 const jpeg = bytes(
@@ -156,6 +160,25 @@ describe('files', () => {
     expect(listFiles(db, 'sonotas').map((file) => file.id)).toEqual([kept.id])
     expect(existsSync(join(files, gone.id))).toBe(false)
     expect(listFolders(db, 'sonotas').map((folder) => folder.name)).toEqual(['About'])
+  })
+
+  it('keeps one small preview per file, and drops it with the file', async () => {
+    const { db, files } = setup()
+    const saved = (await saveFile(db, files, 'sonotas', 'big.png', Readable.from([png])))!
+    expect(saved.thumb).toBe(false)
+    // Too large, not an image it takes, or another project's file: refused.
+    expect(saveThumb(db, files, 'sonotas', saved.id, pngOf(640, 480))).toBe(false)
+    expect(saveThumb(db, files, 'sonotas', saved.id, bytes('%PDF-1.7\n'))).toBe(false)
+    expect(saveThumb(db, files, 'other', saved.id, pngOf(320, 240))).toBe(false)
+    expect(saveThumb(db, files, 'sonotas', saved.id, pngOf(320, 240))).toBe(true)
+    expect(getFile(db, 'sonotas', saved.id)!.thumb).toBe(true)
+    expect(readThumb(db, files, 'sonotas', saved.id)!.type).toBe('image/png')
+    expect(readThumb(db, files, 'other', saved.id)).toBeNull()
+    // Its address never changes, so it is never replaced.
+    expect(saveThumb(db, files, 'sonotas', saved.id, pngOf(160, 120))).toBe(false)
+    expect(existsSync(join(files, `${saved.id}.thumb`))).toBe(true)
+    deleteFile(db, files, 'sonotas', saved.id)
+    expect(readdirSync(files)).toEqual([])
   })
 
   it('goes with its project, which its rows would otherwise hold on to', async () => {

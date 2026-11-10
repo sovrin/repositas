@@ -16,6 +16,10 @@ site  ── GET /v1/files/<project>/<id>       the file's bytes, cached for goo
   default) to match; Caddy has none.
 - **Addresses**: random and unguessable, but public: anyone who has one can read the file. A file
   never changes under its address; deleting it makes the address answer 404.
+- **Previews**: the owner's browser draws each large image at 320 px and sends that along with
+  it (WebP, or JPEG where the browser can't write WebP), so the list never loads originals; small
+  images are their own preview. Images uploaded before previews get one the first time the list
+  shows them. Previews are for the admin only, at `/api/p/<project>/files/<id>/thumb`.
 - **Folders**: one level, a file in one folder or none. A file's name and folder can change; its
   address stays. Deleting a folder deletes the files in it.
 - **Storage**: on disk in the data directory (`<DATA_DIR>/repositas/`), beside the database. Back
